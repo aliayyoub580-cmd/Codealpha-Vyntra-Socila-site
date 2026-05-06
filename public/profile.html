@@ -46,5 +46,36 @@
       </div>
     </main>
     <nav id="mobileBottomNav" aria-label="Mobile navigation"></nav>
+
+    <!-- Edit Post Modal -->
+    <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editPostModalLabel">Edit Post</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="editPostId">
+
+            <div class="mb-3">
+              <label class="form-label" for="editPostTitle">Post title</label>
+              <input type="text" id="editPostTitle" class="form-control" maxlength="140" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="editPostDescription">Post description</label>
+              <textarea id="editPostDescription" class="form-control" rows="5" maxlength="5000" required></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="updatePost()">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

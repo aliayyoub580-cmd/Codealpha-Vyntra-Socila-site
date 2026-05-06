@@ -1,4 +1,7 @@
 (function () {
+  // Global posts storage for edit functionality
+  window.allPosts = [];
+
   function postAuthor(post) {
     return post.author || {
       id: post.user_id,
@@ -57,21 +60,51 @@
   window.renderPostCard = function renderPostCard(post, options = {}) {
     const author = postAuthor(post);
     const commentsId = `comments-${post.id}`;
+    const currentUser = window.Vyntra.currentUser;
+    const isOwner = currentUser && currentUser.id === post.user_id;
+    
+    // Owner actions (Edit/Delete buttons)
+    const ownerActions = isOwner
+      ? `
+        <div class="post-owner-actions">
+          <button class="btn-post-action" type="button" onclick="openEditPostModal('${post.id}')" aria-label="Edit post">
+            <i data-lucide="edit-2"></i><span>Edit</span>
+          </button>
+          <button class="btn-post-action danger" type="button" onclick="deletePost('${post.id}')" aria-label="Delete post">
+            <i data-lucide="trash-2"></i><span>Delete</span>
+          </button>
+        </div>
+      `
+      : "";
+    
+    // Show "Read more" button if description is longer than 120 chars
+    const showReadMore = post.description.length > 120;
+    const readMoreBtn = showReadMore
+      ? `<button class="read-more-btn" type="button" onclick="toggleReadMore('${post.id}', this)">Read more</button>`
+      : "";
 
     return `
       <article class="post-card" data-post-card="${post.id}">
         <header class="post-author">
-          <a href="/profile?id=${encodeURIComponent(author.id)}" aria-label="View ${window.Vyntra.escapeHtml(author.full_name)} profile">
-            <img class="avatar" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)}">
-          </a>
-          <div class="author-meta flex-grow-1">
-            <a class="author-name" href="/profile?id=${encodeURIComponent(author.id)}">${window.Vyntra.escapeHtml(author.full_name)}</a>
-            <span class="author-username">@${window.Vyntra.escapeHtml(author.username)} &middot; ${window.Vyntra.formatDate(post.created_at)}</span>
+          <div style="display: flex; gap: 0.75rem; width: 100%; align-items: flex-start;">
+            <div style="flex: 1;">
+              <a href="/profile?id=${encodeURIComponent(author.id)}" aria-label="View ${window.Vyntra.escapeHtml(author.full_name)} profile">
+                <img class="avatar" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)}">
+              </a>
+            </div>
+            <div class="author-meta flex-grow-1">
+              <a class="author-name" href="/profile?id=${encodeURIComponent(author.id)}">${window.Vyntra.escapeHtml(author.full_name)}</a>
+              <span class="author-username">@${window.Vyntra.escapeHtml(author.username)} &middot; ${window.Vyntra.formatDate(post.created_at)}</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              ${followButton(author, post)}
+              ${ownerActions}
+            </div>
           </div>
-          ${followButton(author, post)}
         </header>
         <h2 class="post-title">${window.Vyntra.escapeHtml(post.title)}</h2>
-        <p class="post-description">${window.Vyntra.escapeHtml(post.description)}</p>
+        <p class="post-description collapsed" id="desc-${post.id}">${window.Vyntra.escapeHtml(post.description)}</p>
+        ${readMoreBtn}
         ${mediaMarkup(post, options)}
         <div class="post-actions" aria-label="Post actions">
           ${actionButton({
@@ -210,6 +243,7 @@
           : Promise.resolve({ profiles: [] })
       ]);
       const posts = (payload.posts || []).filter((post) => matchesSearch(post, query));
+      window.allPosts = posts; // Store posts globally
       const profileResults = profileSearchMarkup(profilePayload.profiles || [], query);
       const postResults = posts.length
         ? posts.map((post) => window.renderPostCard(post)).join('')
@@ -229,6 +263,7 @@
     try {
       const payload = await window.Vyntra.apiFetch(`/api/users/${encodeURIComponent(userId)}/posts`);
       const posts = payload.posts || [];
+      window.allPosts = posts; // Store posts globally
       mount.innerHTML = posts.length
         ? posts.map((post) => window.renderPostCard(post)).join('')
         : emptyPostsMarkup('This user has not posted yet.');
@@ -245,6 +280,7 @@
     mount.innerHTML = loadingPostMarkup();
     try {
       const payload = await window.Vyntra.apiFetch(`/api/posts/${encodeURIComponent(postId)}`);
+      window.allPosts = [payload.post]; // Store single post in global array
       mount.innerHTML = window.renderPostCard(payload.post, { embedPdf: true });
     } catch (error) {
       mount.innerHTML = `<div class="empty-state"><i data-lucide="file-question"></i><h1 class="h4 mt-3">Post not found</h1><p class="muted-text mb-0">${window.Vyntra.escapeHtml(error.message)}</p></div>`;
@@ -375,13 +411,15 @@
   };
 
   async function createPost(event) {
+    // Capture form reference IMMEDIATELY before any async operations
+    const form = event.currentTarget;
+    
     event.preventDefault();
     if (!(await window.Vyntra.requireAuth('create', '/create'))) return;
 
-    const form = event.currentTarget;
     const button = form.querySelector('[type="submit"]');
-    const imageFile = form.image.files[0];
-    const pdfFile = form.pdf.files[0];
+    const imageFile = form.image?.files[0];
+    const pdfFile = form.pdf?.files[0];
 
     try {
       const imageUrl = validateImageUrl(form.elements.image_url?.value || '');
@@ -409,6 +447,105 @@
     }
   }
 
+  // Toggle read more/less for post descriptions
+  window.toggleReadMore = function toggleReadMore(postId, button) {
+    const desc = document.getElementById(`desc-${postId}`);
+    if (!desc) return;
+
+    desc.classList.toggle("collapsed");
+    if (desc.classList.contains("collapsed")) {
+      button.textContent = "Read more";
+    } else {
+      button.textContent = "Show less";
+    }
+    window.Vyntra.renderIcons();
+  };
+
+  // Open edit post modal
+  window.openEditPostModal = function openEditPostModal(postId) {
+    const post = window.allPosts.find((item) => item.id === postId);
+    if (!post) {
+      window.Vyntra.showToast("Post not found", "danger");
+      return;
+    }
+
+    document.getElementById("editPostId").value = post.id;
+    document.getElementById("editPostTitle").value = post.title;
+    document.getElementById("editPostDescription").value = post.description;
+
+    const modal = new bootstrap.Modal(document.getElementById("editPostModal"));
+    modal.show();
+  };
+
+  // Update post
+  window.updatePost = async function updatePost() {
+    const postId = document.getElementById("editPostId").value;
+    const title = document.getElementById("editPostTitle").value.trim();
+    const description = document.getElementById("editPostDescription").value.trim();
+
+    if (!title || !description) {
+      window.Vyntra.showToast("Title and description are required", "danger");
+      return;
+    }
+
+    try {
+      const response = await window.Vyntra.apiFetch(`/api/posts/${postId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ title, description })
+      });
+
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to update post");
+      }
+
+      const modalElement = document.getElementById("editPostModal");
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      modal.hide();
+
+      window.Vyntra.showToast("Post updated successfully");
+      
+      // Reload posts based on current page
+      if (document.body.dataset.page === 'home' || document.body.dataset.page === 'explore') {
+        window.loadFeedPosts();
+      } else if (document.body.dataset.page === 'post') {
+        const postId = new URLSearchParams(window.location.search).get('id');
+        if (postId) window.loadSinglePost(postId);
+      }
+    } catch (error) {
+      window.Vyntra.showToast(error.message || "Failed to update post", "danger");
+    }
+  };
+
+  // Delete post
+  window.deletePost = async function deletePost(postId) {
+    const confirmDelete = confirm("Are you sure you want to delete this post? This action cannot be undone.");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await window.Vyntra.apiFetch(`/api/posts/${postId}`, {
+        method: "DELETE"
+      });
+
+      if (!response || response.error) {
+        throw new Error(response?.error || "Failed to delete post");
+      }
+
+      window.Vyntra.showToast("Post deleted successfully");
+      
+      // Reload posts based on current page
+      if (document.body.dataset.page === 'home' || document.body.dataset.page === 'explore') {
+        window.loadFeedPosts();
+      } else if (document.body.dataset.page === 'post') {
+        window.location.href = '/';
+      }
+    } catch (error) {
+      window.Vyntra.showToast(error.message || "Failed to delete post", "danger");
+    }
+  };
+
   async function initPostsPage() {
     await window.Vyntra.ready;
 
@@ -430,9 +567,9 @@
     const createForm = document.getElementById('createPostForm');
     if (createForm) {
       createForm.addEventListener('submit', createPost);
-      createForm.image.addEventListener('change', (event) => previewImage(event.target.files[0]));
-      createForm.elements.image_url?.addEventListener('input', (event) => previewImageUrl(event.target.value));
-      createForm.pdf.addEventListener('change', (event) => previewPdf(event.target.files[0]));
+      if (createForm.image) createForm.image.addEventListener('change', (event) => previewImage(event.target.files[0]));
+      if (createForm.elements.image_url) createForm.elements.image_url.addEventListener('input', (event) => previewImageUrl(event.target.value));
+      if (createForm.pdf) createForm.pdf.addEventListener('change', (event) => previewPdf(event.target.files[0]));
 
       document.querySelectorAll('[data-image-source]').forEach((button) => {
         button.addEventListener('click', () => {

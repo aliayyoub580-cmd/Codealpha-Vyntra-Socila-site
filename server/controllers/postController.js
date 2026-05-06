@@ -59,9 +59,20 @@ export const getUserPosts = asyncHandler(async (req, res) => {
 export const createPost = asyncHandler(async (req, res) => {
   requireSupabase();
 
-  const title = requiredString(req.body.title, 'Post title', 140);
-  const description = requiredString(req.body.description, 'Post description', 5000);
-  const pastedImageUrl = optionalImageUrl(req.body.image_url || req.body.imageUrl);
+  const title = requiredString(
+    Array.isArray(req.body.title) ? req.body.title[0] : req.body.title,
+    'Post title',
+    140
+  );
+  const description = requiredString(
+    Array.isArray(req.body.description) ? req.body.description[0] : req.body.description,
+    'Post description',
+    5000
+  );
+  const imageUrlValue = req.body.image_url || req.body.imageUrl;
+  const pastedImageUrl = optionalImageUrl(
+    Array.isArray(imageUrlValue) ? imageUrlValue[0] : imageUrlValue
+  );
   const { image, pdf } = getPostFiles(req);
 
   if (image && pastedImageUrl) {
