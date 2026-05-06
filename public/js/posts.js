@@ -60,11 +60,11 @@
   window.renderPostCard = function renderPostCard(post, options = {}) {
     const author = postAuthor(post);
     const commentsId = `comments-${post.id}`;
-    const currentUser = window.Vyntra.currentUser;
-    const isOwner = currentUser && currentUser.id === post.user_id;
+    const isOwner = post.viewer?.isOwner === true;
+    const showOwnerActions = options.showOwnerActions !== false && isOwner;
     
-    // Owner actions (Edit/Delete buttons)
-    const ownerActions = isOwner
+    // Owner actions (Edit/Delete buttons) - only on profile page
+    const ownerActions = showOwnerActions
       ? `
         <div class="post-owner-actions">
           <button class="btn-post-action" type="button" onclick="openEditPostModal('${post.id}')" aria-label="Edit post">
@@ -86,17 +86,17 @@
     return `
       <article class="post-card" data-post-card="${post.id}">
         <header class="post-author">
-          <div style="display: flex; gap: 0.75rem; width: 100%; align-items: flex-start;">
-            <div style="flex: 1;">
+          <div style="display: flex; gap: 0.5rem; width: 100%; align-items: flex-start;">
+            <div style="flex: 0 0 auto;">
               <a href="/profile?id=${encodeURIComponent(author.id)}" aria-label="View ${window.Vyntra.escapeHtml(author.full_name)} profile">
                 <img class="avatar" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)}">
               </a>
             </div>
-            <div class="author-meta flex-grow-1">
+            <div class="author-meta flex-grow-1 min-w-0">
               <a class="author-name" href="/profile?id=${encodeURIComponent(author.id)}">${window.Vyntra.escapeHtml(author.full_name)}</a>
               <span class="author-username">@${window.Vyntra.escapeHtml(author.username)} &middot; ${window.Vyntra.formatDate(post.created_at)}</span>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
               ${followButton(author, post)}
               ${ownerActions}
             </div>
@@ -246,7 +246,7 @@
       window.allPosts = posts; // Store posts globally
       const profileResults = profileSearchMarkup(profilePayload.profiles || [], query);
       const postResults = posts.length
-        ? posts.map((post) => window.renderPostCard(post)).join('')
+        ? posts.map((post) => window.renderPostCard(post, { showOwnerActions: false })).join('')
         : emptyPostsMarkup(query ? `No posts found for "${query}".` : undefined);
       mount.innerHTML = `${profileResults}${postResults}`;
     } catch (error) {
@@ -265,7 +265,7 @@
       const posts = payload.posts || [];
       window.allPosts = posts; // Store posts globally
       mount.innerHTML = posts.length
-        ? posts.map((post) => window.renderPostCard(post)).join('')
+        ? posts.map((post) => window.renderPostCard(post, { showOwnerActions: true })).join('')
         : emptyPostsMarkup('This user has not posted yet.');
     } catch (error) {
       mount.innerHTML = `<div class="empty-state"><p class="muted-text mb-0">${window.Vyntra.escapeHtml(error.message)}</p></div>`;
@@ -281,7 +281,7 @@
     try {
       const payload = await window.Vyntra.apiFetch(`/api/posts/${encodeURIComponent(postId)}`);
       window.allPosts = [payload.post]; // Store single post in global array
-      mount.innerHTML = window.renderPostCard(payload.post, { embedPdf: true });
+      mount.innerHTML = window.renderPostCard(payload.post, { embedPdf: true, showOwnerActions: false });
     } catch (error) {
       mount.innerHTML = `<div class="empty-state"><i data-lucide="file-question"></i><h1 class="h4 mt-3">Post not found</h1><p class="muted-text mb-0">${window.Vyntra.escapeHtml(error.message)}</p></div>`;
     }
@@ -491,10 +491,7 @@
     try {
       const response = await window.Vyntra.apiFetch(`/api/posts/${postId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ title, description })
+        body: { title, description }
       });
 
       if (!response || response.error) {
