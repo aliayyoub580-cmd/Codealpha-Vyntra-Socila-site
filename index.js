@@ -1,1 +1,1 @@
-import './server/server.js';
+export { default } from './server.js';
