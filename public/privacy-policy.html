@@ -3,10 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vyntra Social Feed | Public Posts and Community Updates</title>
-    <meta name="description" content="Browse the Vyntra Social feed for public posts, community updates, creator profiles, and conversations from people online.">
+    <title>Privacy Policy | Vyntra Social</title>
+    <meta name="description" content="Read the Vyntra Social privacy policy to understand how account data, content, and usage information are handled on the platform.">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://vyntra-socila.vercel.app/">
+    <link rel="canonical" href="https://vyntra-socila.vercel.app/privacy-policy">
+    <meta property="og:title" content="Privacy Policy | Vyntra Social">
+    <meta property="og:description" content="Read the Vyntra Social privacy policy to understand how account data, content, and usage information are handled on the platform.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Vyntra Social">
+    <meta property="og:url" content="https://vyntra-socila.vercel.app/privacy-policy">
+    <meta property="og:image" content="https://vyntra-socila.vercel.app/og-image.png">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -30,19 +36,35 @@
     <script defer src="/js/profile.js"></script>
     <script defer src="/js/main.js"></script>
   </head>
-  <body data-page="home" data-auth="optional">
+  <body data-page="privacy-policy" data-auth="optional">
     <div id="appNavbar"></div>
     <main class="app-shell">
       <section class="home-feed-shell">
-        <div data-config-warning></div>
-        <header class="home-intro">
+        <header class="home-intro policy-hero">
           <div>
-            <p class="eyebrow mb-2" data-feed-eyebrow>Public community feed</p>
-            <h1 class="page-title" data-feed-title>Home Feed</h1>
-            <p class="muted-text mb-0" data-feed-subtitle>Newest posts from the Vyntra community.</p>
+            <p class="eyebrow mb-2">Legal</p>
+            <h1 class="page-title">Privacy Policy</h1>
+            <p class="home-tagline">How Vyntra Social handles information, content, and account data.</p>
           </div>
         </header>
-        <div id="feedList" class="stack-gap" aria-live="polite"></div>
+        <section class="seo-content policy-content">
+          <div>
+            <h2>Information We Collect</h2>
+            <p>We collect information that you provide when you create an account, publish posts, upload media, follow profiles, or interact with content on Vyntra Social.</p>
+          </div>
+          <div>
+            <h2>How We Use Information</h2>
+            <p>We use data to run the platform, personalize your experience, show public content, improve features, and keep the community safe.</p>
+          </div>
+          <div>
+            <h2>Public Content</h2>
+            <p>Posts, profiles, and other public activity can be visible to other users depending on your settings and the features you use.</p>
+          </div>
+          <div>
+            <h2>Contact</h2>
+            <p>If you have privacy questions, contact the Vyntra Social team through the platform or your account support channel.</p>
+          </div>
+        </section>
       </section>
     </main>
     <footer class="site-footer">
@@ -57,36 +79,5 @@
       </div>
     </footer>
     <nav id="mobileBottomNav" aria-label="Mobile navigation"></nav>
-
-    <!-- Edit Post Modal -->
-    <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content custom-modal">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editPostModalLabel">Edit Post</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-
-          <div class="modal-body">
-            <input type="hidden" id="editPostId">
-
-            <div class="mb-3">
-              <label class="form-label" for="editPostTitle">Post title</label>
-              <input type="text" id="editPostTitle" class="form-control" maxlength="140" required>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="editPostDescription">Post description</label>
-              <textarea id="editPostDescription" class="form-control" rows="5" maxlength="5000" required></textarea>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="updatePost()">Save Changes</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </body>
 </html>

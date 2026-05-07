@@ -5,7 +5,7 @@
 
     return `
       <div class="comment" data-comment-id="${comment.id}">
-        <img class="avatar avatar-sm" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)}">
+        <img class="avatar avatar-sm" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)} Vyntra Social user profile avatar" width="36" height="36">
         <div class="comment-body">
           <div class="d-flex justify-content-between gap-2">
             <div>

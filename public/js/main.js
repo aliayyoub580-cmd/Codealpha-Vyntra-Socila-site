@@ -37,7 +37,9 @@
   }
 
   function profileHref() {
+    const profile = window.Vyntra?.currentProfile;
     const id = window.Vyntra?.currentUser?.id;
+    if (profile) return window.Vyntra.profilePath(profile);
     return id ? `${routes.profile}?id=${encodeURIComponent(id)}` : window.Vyntra.loginUrl('profile', routes.profile);
   }
 
@@ -61,7 +63,7 @@
     mount.innerHTML = `
       <nav class="vyntra-navbar">
         <a class="brand-link" href="${routes.home}" aria-label="Vyntra Social home">
-          <img src="assets/logo.png" alt="Vyntra Social logo">
+          <img src="/assets/logo.png" alt="Vyntra Social logo" width="34" height="34">
           <span>Vyntra Social <small class="brand-subtitle d-block">Connect. Share. Grow.</small></span>
         </a>
 
@@ -87,7 +89,7 @@
                    <i data-lucide="square-pen"></i><span>Create</span>
                  </a>
                  <a class="profile-btn" href="${profileHref()}" title="Profile" aria-label="Profile">
-                   <img class="profile-btn-avatar" src="${avatar}" alt="${window.Vyntra.escapeHtml(profile?.full_name || 'Profile')}">
+                   <img class="profile-btn-avatar" src="${avatar}" alt="${window.Vyntra.escapeHtml(profile?.full_name || 'Vyntra Social user profile avatar')}" width="38" height="38">
                  </a>
                  <button class="icon-btn d-none d-sm-inline-flex" type="button" data-logout-button aria-label="Logout" title="Logout">
                    <i data-lucide="log-out"></i>
@@ -176,16 +178,29 @@
     if (!title || !subtitle || !eyebrow) return;
 
     const query = new URLSearchParams(window.location.search).get('q');
+    const robots = document.querySelector('meta[name="robots"]');
     if (active === 'explore') {
       eyebrow.textContent = 'Explore Vyntra';
-      title.textContent = query ? `Search results for "${query}"` : 'Explore';
+      title.textContent = query ? `Search results for "${query}"` : 'Explore Posts';
       subtitle.textContent = query ? 'Public posts matching your search.' : 'Browse public posts and discover people across the community.';
+      document.title = query ? 'Search Users and Posts | Vyntra Social' : 'Explore Posts | Vyntra Social';
+      robots?.setAttribute('content', query ? 'noindex, follow' : 'index, follow');
+      document
+        .querySelector('meta[name="description"]')
+        ?.setAttribute(
+          'content',
+          query
+            ? 'Search users, profiles, and public posts on Vyntra Social to discover new people, topics, and conversations.'
+            : 'Explore public posts, discover creators, search topics, and find new conversations on Vyntra Social.'
+        );
       return;
     }
 
-    eyebrow.textContent = 'Public community feed';
-    title.textContent = 'Home Feed';
-    subtitle.textContent = 'Newest posts from the Vyntra community.';
+    eyebrow.textContent = 'Modern social networking platform';
+    title.textContent = 'Vyntra Social';
+    subtitle.textContent = 'Vyntra Social is a modern social networking platform designed to help users connect with people, share posts, explore public content, follow creators, and grow their online presence.';
+    document.title = 'Vyntra Social | Connect, Share, Grow with a Modern Social Platform';
+    robots?.setAttribute('content', 'index, follow');
   }
 
   async function renderRightPanel(active) {
@@ -204,7 +219,7 @@
       <aside class="right-stack">
         <section class="right-card">
           <div class="right-profile">
-            <img class="avatar" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)}">
+            <img class="avatar" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)} Vyntra Social user profile avatar" width="48" height="48">
             <div class="min-w-0">
               <strong class="d-block text-truncate">${window.Vyntra.escapeHtml(profile.full_name)}</strong>
               <span class="caption">@${window.Vyntra.escapeHtml(profile.username)}</span>
@@ -239,8 +254,8 @@
           .map(
             (item) => `
               <div class="suggested-user">
-                <img class="avatar avatar-sm" src="${item.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(item.full_name)}">
-                <a class="min-w-0 flex-grow-1" href="${routes.profile}?id=${encodeURIComponent(item.id)}">
+                <img class="avatar avatar-sm" src="${item.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(item.full_name)} Vyntra Social user profile avatar" width="36" height="36">
+                <a class="min-w-0 flex-grow-1" href="${window.Vyntra.profilePath(item)}">
                   <strong class="d-block text-truncate">${window.Vyntra.escapeHtml(item.full_name)}</strong>
                   <span class="caption">@${window.Vyntra.escapeHtml(item.username)}</span>
                 </a>
@@ -259,6 +274,108 @@
     });
   }
 
+  function footerMarkup() {
+    return `
+      <div class="footer-glow footer-glow-left" aria-hidden="true"></div>
+      <div class="footer-glow footer-glow-right" aria-hidden="true"></div>
+      <div class="site-footer-inner">
+        <div class="footer-brand-panel">
+          <div class="footer-brand-row">
+            <div class="footer-logo-mark">V</div>
+            <div>
+              <h2 class="footer-brand-title">Vyntra Social</h2>
+              <p class="footer-brand-tag">Connect. Share. Grow.</p>
+            </div>
+          </div>
+          <p class="footer-brand-copy">Vyntra Social is a modern social networking platform where users can connect with people, share posts, explore content, follow creators, and grow their online community.</p>
+          <div class="footer-cta-card">
+            <div class="footer-cta-icon"><i data-lucide="sparkles"></i></div>
+            <div class="footer-cta-copy">
+              <h3>Join the Community</h3>
+              <p>Discover people, share ideas, and build your digital presence with Vyntra Social.</p>
+            </div>
+            <a class="footer-cta-button" href="/explore">Explore Vyntra <i data-lucide="arrow-right"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-links-grid">
+          <div class="footer-links-column">
+            <h3>Platform</h3>
+            <a href="/">Home</a>
+            <a href="/explore">Explore</a>
+            <a href="/create">Create</a>
+            <a href="/profile">Profile</a>
+          </div>
+
+          <div class="footer-links-column">
+            <h3>Community</h3>
+            <a href="/explore">Discover Users</a>
+            <a href="/explore">Public Posts</a>
+            <a href="/explore">Trending Topics</a>
+            <a href="/explore">Suggested Creators</a>
+          </div>
+
+          <div class="footer-links-column">
+            <h3>Company</h3>
+            <a href="/about">About</a>
+            <a href="/privacy-policy">Privacy Policy</a>
+            <a href="/terms-and-conditions">Terms &amp; Conditions</a>
+            <a href="mailto:support@vyntrasocial.com">Contact</a>
+          </div>
+
+          <div class="footer-newsletter-column">
+            <h3>Stay in the loop</h3>
+            <p>Get updates about new features, community highlights, and platform improvements.</p>
+            <form class="footer-newsletter-form" action="/register" method="get">
+              <label class="visually-hidden" for="footerEmail">Email address</label>
+              <input id="footerEmail" name="email" type="email" placeholder="Enter your email" autocomplete="email">
+              <button type="submit">Subscribe</button>
+            </form>
+            <div class="footer-socials" aria-label="Vyntra Social social links">
+              <a href="/explore" aria-label="Updates"><i data-lucide="rss"></i></a>
+              <a href="/create" aria-label="Share"><i data-lucide="share-2"></i></a>
+              <a href="/profile" aria-label="Creators"><i data-lucide="users"></i></a>
+              <a href="/about" aria-label="Community"><i data-lucide="globe"></i></a>
+              <a href="mailto:support@vyntrasocial.com" aria-label="Contact"><i data-lucide="mail"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="site-footer-bottom">
+          <p>© <span data-footer-year></span> <span class="footer-bold">Vyntra Social</span>. All rights reserved.</p>
+          <p class="footer-love">Made with <i data-lucide="heart"></i> for the Vyntra community.</p>
+        </div>
+      </div>`;
+  }
+
+  function renderFooter() {
+    const existingFooters = document.querySelectorAll('footer.site-footer');
+    if (existingFooters.length) {
+      existingFooters.forEach((footer) => {
+        footer.innerHTML = footerMarkup();
+      });
+      return;
+    }
+
+    const footer = document.createElement('footer');
+    footer.className = 'site-footer';
+    footer.innerHTML = footerMarkup();
+    const mobileNav = document.getElementById('mobileBottomNav');
+    if (mobileNav && mobileNav.parentElement) {
+      mobileNav.parentElement.insertBefore(footer, mobileNav);
+      return;
+    }
+
+    document.body.appendChild(footer);
+  }
+
+  function syncFooterYear() {
+    const year = String(new Date().getFullYear());
+    document.querySelectorAll('[data-footer-year]').forEach((node) => {
+      node.textContent = year;
+    });
+  }
+
   async function initShell() {
     const active = activePage();
 
@@ -266,8 +383,10 @@
     renderSidebar(active);
     renderBottomNav(active);
     updateFeedIntro(active);
+    renderFooter();
     window.loadSavedTheme?.();
     window.Vyntra?.renderIcons?.();
+    syncFooterYear();
 
     await window.Vyntra.ready;
     renderConfigWarning();
@@ -303,6 +422,7 @@
     await renderRightPanel(active);
     window.Vyntra.shellReady = true;
     window.Vyntra.renderIcons();
+    syncFooterYear();
     document.dispatchEvent(new CustomEvent('vyntra:auth-ready', { detail: { session } }));
   }
 

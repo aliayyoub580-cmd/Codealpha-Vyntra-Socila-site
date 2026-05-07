@@ -3,16 +3,21 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Social Post | Vyntra Social</title>
-    <meta name="description" content="Read a public post on Vyntra Social, explore comments and media, and discover more social posts from the online community.">
-    <meta name="robots" content="noindex, follow">
-    <link rel="canonical" href="https://vyntra-socila.vercel.app/post">
-    <meta property="og:title" content="Social Post | Vyntra Social">
-    <meta property="og:description" content="Read a public post on Vyntra Social, explore comments and media, and discover more social posts from the online community.">
-    <meta property="og:type" content="article">
+    <title>Explore Posts | Vyntra Social</title>
+    <meta name="description" content="Explore public posts, discover creators, search topics, and find new conversations on Vyntra Social.">
+    <meta name="keywords" content="Vyntra Social, social networking platform, social media platform, online community, share posts, create posts, explore posts, follow users, user profiles, connect online, modern social platform">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://vyntra-socila.vercel.app/explore">
+    <meta property="og:title" content="Explore Posts | Vyntra Social">
+    <meta property="og:description" content="Explore public posts, discover creators, search topics, and find new conversations on Vyntra Social.">
+    <meta property="og:type" content="website">
     <meta property="og:site_name" content="Vyntra Social">
-    <meta property="og:url" content="https://vyntra-socila.vercel.app/post">
+    <meta property="og:url" content="https://vyntra-socila.vercel.app/explore">
     <meta property="og:image" content="https://vyntra-socila.vercel.app/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Explore Posts | Vyntra Social">
+    <meta name="twitter:description" content="Explore public posts, discover creators, search topics, and find new conversations on Vyntra Social.">
+    <meta name="twitter:image" content="https://vyntra-socila.vercel.app/og-image.png">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -36,27 +41,24 @@
     <script defer src="/js/profile.js"></script>
     <script defer src="/js/main.js"></script>
   </head>
-  <body data-page="post" data-auth="optional">
+  <body data-page="explore" data-auth="optional">
     <div id="appNavbar"></div>
     <main class="app-shell">
-      <div class="layout-grid">
-        <div class="sidebar-panel js-sidebar"></div>
-        <section class="feed-column">
-          <div data-config-warning></div>
-          <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-            <a href="/">Home</a><span>/</span><a href="/explore">Explore</a><span>/</span><span>Post</span>
-          </nav>
-          <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
-            <div>
-              <h1 class="page-title">Post</h1>
-              <p class="muted-text mb-0">Focused post view with comments and media.</p>
-            </div>
-            <a class="btn btn-outline-vyntra d-inline-flex align-items-center gap-2" href="/"><i data-lucide="arrow-left"></i><span class="d-none d-sm-inline">Feed</span></a>
+      <section class="home-feed-shell">
+        <div data-config-warning></div>
+        <header class="home-intro">
+          <div>
+            <p class="eyebrow mb-2" data-feed-eyebrow>Explore Vyntra</p>
+            <h1 class="page-title" data-feed-title>Explore Posts</h1>
+            <p class="muted-text mb-0" data-feed-subtitle>Browse public posts, discover creators, search topics, and find new conversations on Vyntra Social.</p>
           </div>
-          <div id="singlePost"></div>
-        </section>
-        <div class="right-panel js-right-panel"></div>
-      </div>
+          <div class="home-cta" aria-label="Explore Vyntra Social actions">
+            <a class="btn btn-vyntra d-inline-flex align-items-center gap-2" href="/register"><i data-lucide="user-plus"></i>Join Vyntra Social</a>
+            <a class="btn btn-outline-vyntra d-inline-flex align-items-center gap-2" href="/create"><i data-lucide="square-pen"></i>Create a Post</a>
+          </div>
+        </header>
+        <div id="feedList" class="stack-gap" aria-live="polite"></div>
+      </section>
     </main>
     <footer class="site-footer">
       <div class="site-footer-brand">

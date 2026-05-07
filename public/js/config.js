@@ -5,8 +5,8 @@
     supabase: null,
     currentUser: null,
     currentProfile: null,
-    defaultAvatar: 'assets/default-avatar.png',
-    defaultCover: 'assets/default-cover.jpg'
+    defaultAvatar: '/assets/default-avatar.png',
+    defaultCover: '/assets/default-cover.jpg'
   };
 
   Vyntra.escapeHtml = function escapeHtml(value) {
@@ -27,6 +27,29 @@
       hour: 'numeric',
       minute: '2-digit'
     }).format(new Date(value));
+  };
+
+  Vyntra.slugify = function slugify(value, fallback = 'vyntra-social') {
+    const slug = String(value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 90)
+      .replace(/-+$/g, '');
+    return slug || fallback;
+  };
+
+  Vyntra.profilePath = function profilePath(profile) {
+    if (!profile) return '/profile';
+    if (profile.username) return `/profile/${encodeURIComponent(profile.username)}`;
+    if (profile.id) return `/profile?id=${encodeURIComponent(profile.id)}`;
+    return '/profile';
+  };
+
+  Vyntra.postPath = function postPath(post) {
+    if (!post?.id) return '/post';
+    const slug = Vyntra.slugify(post.title, 'vyntra-social-post');
+    return `/post/${encodeURIComponent(post.id)}/${slug}`;
   };
 
   Vyntra.fileSize = function fileSize(bytes) {

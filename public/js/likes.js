@@ -58,7 +58,8 @@
   window.sharePost = async function sharePost(postId) {
     if (!(await window.Vyntra.requireAuth('share'))) return;
 
-    const url = `${window.location.origin}/post?id=${encodeURIComponent(postId)}`;
+    const post = window.allPosts?.find((item) => item.id === postId);
+    const url = `${window.location.origin}${window.Vyntra.postPath(post || { id: postId })}`;
 
     try {
       if (navigator.share) {

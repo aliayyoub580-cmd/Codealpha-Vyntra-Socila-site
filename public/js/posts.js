@@ -11,6 +11,12 @@
     };
   }
 
+  function excerpt(value, max = 220) {
+    const cleaned = String(value || '').replace(/\s+/g, ' ').trim();
+    if (cleaned.length <= max) return cleaned;
+    return `${cleaned.slice(0, max - 3).trim()}...`;
+  }
+
   function followButton(author, post) {
     if (!author?.id || post.viewer?.isOwner) return '';
     const following = Boolean(post.viewer?.followingAuthor);
@@ -28,7 +34,7 @@
 
   function mediaMarkup(post, options) {
     const image = post.image_url
-      ? `<img class="post-image" src="${post.image_url}" alt="${window.Vyntra.escapeHtml(post.title)}" loading="lazy">`
+      ? `<img class="post-image" src="${post.image_url}" alt="${window.Vyntra.escapeHtml(post.title)} shared as a post on Vyntra Social" width="1200" height="675" loading="${options?.fullContent ? 'eager' : 'lazy'}" decoding="async">`
       : '';
 
     if (!post.pdf_url) return image;
@@ -57,11 +63,33 @@
       </button>`;
   }
 
+  function updatePostSeo(post) {
+    const postUrl = `https://vyntra-socila.vercel.app${window.Vyntra.postPath(post)}`;
+    const rawDescription = post.description || `Read ${post.title} on Vyntra Social.`;
+    const description = rawDescription.length > 155 ? `${rawDescription.slice(0, 152).trim()}...` : rawDescription;
+    document.title = `${post.title} | Vyntra Social`;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', postUrl);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${post.title} | Vyntra Social`);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', postUrl);
+    document
+      .querySelector('meta[name="robots"]')
+      ?.setAttribute('content', rawDescription.replace(/\s+/g, ' ').trim().length >= 100 ? 'index, follow' : 'noindex, follow');
+    if (post.image_url) {
+      document.querySelector('meta[property="og:image"]')?.setAttribute('content', post.image_url);
+    }
+  }
+
   window.renderPostCard = function renderPostCard(post, options = {}) {
     const author = postAuthor(post);
+    const authorUrl = window.Vyntra.profilePath(author);
+    const postUrl = window.Vyntra.postPath(post);
     const commentsId = `comments-${post.id}`;
     const isOwner = post.viewer?.isOwner === true;
     const showOwnerActions = options.showOwnerActions !== false && isOwner;
+    const fullContent = options.fullContent === true;
+    const renderedDescription = fullContent ? post.description : excerpt(post.description);
     
     // Owner actions (Edit/Delete buttons) - only on profile page
     const ownerActions = showOwnerActions
@@ -78,9 +106,11 @@
       : "";
     
     // Show "Read more" button if description is longer than 120 chars
-    const showReadMore = post.description.length > 120;
+    const showReadMore = fullContent && post.description.length > 120;
     const readMoreBtn = showReadMore
       ? `<button class="read-more-btn" type="button" onclick="toggleReadMore('${post.id}', this)">Read more</button>`
+      : !fullContent && post.description.length > renderedDescription.length
+        ? `<a class="read-more-btn" href="${postUrl}">Read full post on Vyntra Social</a>`
       : "";
 
     return `
@@ -88,12 +118,12 @@
         <header class="post-author">
           <div style="display: flex; gap: 0.5rem; width: 100%; align-items: flex-start;">
             <div style="flex: 0 0 auto;">
-              <a href="/profile?id=${encodeURIComponent(author.id)}" aria-label="View ${window.Vyntra.escapeHtml(author.full_name)} profile">
-                <img class="avatar" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)}">
+              <a href="${authorUrl}" aria-label="View ${window.Vyntra.escapeHtml(author.full_name)} Vyntra Social profile">
+                <img class="avatar" src="${author.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(author.full_name)} Vyntra Social user profile avatar" width="48" height="48">
               </a>
             </div>
             <div class="author-meta flex-grow-1 min-w-0">
-              <a class="author-name" href="/profile?id=${encodeURIComponent(author.id)}">${window.Vyntra.escapeHtml(author.full_name)}</a>
+              <a class="author-name" href="${authorUrl}">${window.Vyntra.escapeHtml(author.full_name)}</a>
               <span class="author-username">@${window.Vyntra.escapeHtml(author.username)} &middot; ${window.Vyntra.formatDate(post.created_at)}</span>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0;">
@@ -102,8 +132,8 @@
             </div>
           </div>
         </header>
-        <h2 class="post-title">${window.Vyntra.escapeHtml(post.title)}</h2>
-        <p class="post-description collapsed" id="desc-${post.id}">${window.Vyntra.escapeHtml(post.description)}</p>
+        <h2 class="post-title"><a href="${postUrl}">${window.Vyntra.escapeHtml(post.title)}</a></h2>
+        <p class="post-description ${fullContent ? 'collapsed' : ''}" id="desc-${post.id}">${window.Vyntra.escapeHtml(renderedDescription)}</p>
         ${readMoreBtn}
         ${mediaMarkup(post, options)}
         <div class="post-actions" aria-label="Post actions">
@@ -215,8 +245,8 @@
             ? profiles
                 .map(
                   (profile) => `
-                    <a class="suggested-user" href="/profile?id=${encodeURIComponent(profile.id)}">
-                      <img class="avatar avatar-sm" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)}">
+                    <a class="suggested-user" href="${window.Vyntra.profilePath(profile)}">
+                      <img class="avatar avatar-sm" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)} Vyntra Social user profile avatar" width="36" height="36">
                       <span class="min-w-0">
                         <strong class="d-block text-truncate">${window.Vyntra.escapeHtml(profile.full_name)}</strong>
                         <span class="caption">@${window.Vyntra.escapeHtml(profile.username)}</span>
@@ -281,12 +311,22 @@
     try {
       const payload = await window.Vyntra.apiFetch(`/api/posts/${encodeURIComponent(postId)}`);
       window.allPosts = [payload.post]; // Store single post in global array
-      mount.innerHTML = window.renderPostCard(payload.post, { embedPdf: true, showOwnerActions: false });
+      updatePostSeo(payload.post);
+      mount.innerHTML = window.renderPostCard(payload.post, { embedPdf: true, showOwnerActions: false, fullContent: true });
     } catch (error) {
       mount.innerHTML = `<div class="empty-state"><i data-lucide="file-question"></i><h1 class="h4 mt-3">Post not found</h1><p class="muted-text mb-0">${window.Vyntra.escapeHtml(error.message)}</p></div>`;
     }
     window.Vyntra.renderIcons();
   };
+
+  function singlePostIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const queryId = params.get('id');
+    if (queryId) return queryId;
+
+    const [, page, id] = window.location.pathname.split('/');
+    return page === 'post' ? decodeURIComponent(id || '') : '';
+  }
 
   function validateCreatePostFiles(imageFile, pdfFile) {
     const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -508,7 +548,7 @@
       if (document.body.dataset.page === 'home' || document.body.dataset.page === 'explore') {
         window.loadFeedPosts();
       } else if (document.body.dataset.page === 'post') {
-        const postId = new URLSearchParams(window.location.search).get('id');
+        const postId = singlePostIdFromUrl();
         if (postId) window.loadSinglePost(postId);
       }
     } catch (error) {
@@ -556,7 +596,7 @@
     }
 
     if (document.body.dataset.page === 'post') {
-      const postId = new URLSearchParams(window.location.search).get('id');
+      const postId = singlePostIdFromUrl();
       if (postId) loadAfterShell(() => loadSinglePost(postId));
       else document.getElementById('singlePost').innerHTML = emptyPostsMarkup('Choose a post from the feed to view details.');
     }

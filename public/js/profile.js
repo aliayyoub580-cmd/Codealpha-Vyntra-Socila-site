@@ -6,8 +6,8 @@
 
     return `
       <section class="profile-card">
-        <img class="profile-cover" src="${profile.cover_image_url || window.Vyntra.defaultCover}" alt="${window.Vyntra.escapeHtml(profile.full_name)} cover image">
-        <img class="profile-avatar" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)} profile image">
+        <img class="profile-cover" src="${profile.cover_image_url || window.Vyntra.defaultCover}" alt="${window.Vyntra.escapeHtml(profile.full_name)} Vyntra Social profile banner for online community platform" width="1200" height="500" loading="eager" decoding="async">
+        <img class="profile-avatar" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)} Vyntra Social user profile avatar" width="112" height="112">
         <div class="profile-details">
           <h1 class="page-title">${window.Vyntra.escapeHtml(profile.full_name)}</h1>
           <p class="author-username mb-0">@${window.Vyntra.escapeHtml(profile.username)}</p>
@@ -45,11 +45,42 @@
       </section>`;
   }
 
+  function updateProfileSeo(profile) {
+    const profileUrl = `https://vyntra-socila.vercel.app${window.Vyntra.profilePath(profile)}`;
+    const description = `${profile.full_name} is on Vyntra Social. Follow this profile, explore public posts, and connect with people online.`;
+    document.title = `${profile.full_name} | Vyntra Social`;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', profileUrl);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${profile.full_name} | Vyntra Social`);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', description);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', profileUrl);
+    if (profile.profile_image_url) {
+      document.querySelector('meta[property="og:image"]')?.setAttribute('content', profile.profile_image_url);
+    }
+    document
+      .querySelector('meta[name="robots"]')
+      ?.setAttribute('content', profile.bio || Number(profile.counts?.posts || 0) > 0 ? 'index, follow' : 'noindex, follow');
+  }
+
   window.loadProfile = async function loadProfile(userId) {
-    const endpoint = userId ? `/api/profiles/${encodeURIComponent(userId)}` : '/api/auth/session';
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId || '');
+    const endpoint = userId
+      ? isUuid
+        ? `/api/profiles/${encodeURIComponent(userId)}`
+        : `/api/profiles/username/${encodeURIComponent(userId)}`
+      : '/api/auth/session';
     const payload = await window.Vyntra.apiFetch(endpoint);
     return payload.profile;
   };
+
+  function profileLookupFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const queryId = params.get('id');
+    if (queryId) return queryId;
+
+    const [, page, username] = window.location.pathname.split('/');
+    return page === 'profile' ? decodeURIComponent(username || '') : '';
+  }
 
   window.loadFollowList = async function loadFollowList(userId, type) {
     const mount = document.getElementById('relationshipList');
@@ -70,8 +101,8 @@
               ? profiles
                   .map(
                     (profile) => `
-                      <a class="suggested-user" href="/profile?id=${encodeURIComponent(profile.id)}">
-                        <img class="avatar avatar-sm" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)}">
+                      <a class="suggested-user" href="${window.Vyntra.profilePath(profile)}">
+                        <img class="avatar avatar-sm" src="${profile.profile_image_url || window.Vyntra.defaultAvatar}" alt="${window.Vyntra.escapeHtml(profile.full_name)} Vyntra Social user profile avatar" width="36" height="36">
                         <span class="min-w-0">
                           <strong class="d-block text-truncate">${window.Vyntra.escapeHtml(profile.full_name)}</strong>
                           <span class="caption">@${window.Vyntra.escapeHtml(profile.username)}</span>
@@ -132,8 +163,7 @@
     await window.Vyntra.ready;
     const session = await window.Vyntra.getSession();
 
-    const params = new URLSearchParams(window.location.search);
-    const requestedId = params.get('id');
+    const requestedId = profileLookupFromUrl();
     const mount = document.getElementById('profileMount');
 
     if (!requestedId && !session) {
@@ -152,6 +182,7 @@
 
     try {
       const profile = await window.loadProfile(userId);
+      updateProfileSeo(profile);
       mount.innerHTML = profileCard(profile);
       await window.loadUserPosts(profile.id);
       if (window.location.hash === '#followers') window.loadFollowList(profile.id, 'followers');
@@ -191,16 +222,17 @@
         validateImage(coverImage, 5, 'Cover image');
 
         window.Vyntra.setButtonLoading(button, true, 'Saving');
-        await window.updateProfile({
+        const updatePayload = await window.updateProfile({
           full_name: form.full_name.value,
           username: form.username.value,
           bio: form.bio.value
         });
         if (profileImage) await window.uploadProfileImage(profileImage);
         if (coverImage) await window.uploadCoverImage(coverImage);
+        if (updatePayload?.profile) window.Vyntra.currentProfile = updatePayload.profile;
 
         window.Vyntra.showToast('Profile updated successfully');
-        window.location.href = `/profile?id=${encodeURIComponent(window.Vyntra.currentUser.id)}`;
+        window.location.href = window.Vyntra.profilePath(window.Vyntra.currentProfile);
       } catch (error) {
         window.Vyntra.showToast(error.message, 'danger');
       } finally {
