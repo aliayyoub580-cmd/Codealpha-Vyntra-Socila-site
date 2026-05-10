@@ -105,13 +105,7 @@ For questions or help, open an issue in the repository or contact the maintainer
 Embedded demo video (stored in the repository):
 
 <video controls width="720">
-  <source src="
-    
-
-https://github.com/user-attachments/assets/d13c7ba2-619c-4c88-9c0a-3f1d82b7b882
-
-
-    ">
+  <source src="https://github.com/user-attachments/assets/d13c7ba2-619c-4c88-9c0a-3f1d82b7b882">
   Your browser does not support the video tag.
 </video>
 
